@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>正在跳转...</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        /* 动态背景 */
+        .bg-grid {
+            position: fixed; inset: 0; z-index: 0;
+            background-image:
+                linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: gridMove 20s linear infinite;
+        }
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(60px, 60px); }
+        }
+        .glow-orb {
+            position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.15; z-index: 0;
+        }
+        .orb1 { width: 400px; height: 400px; background: #3b82f6; top: -100px; right: -100px; animation: orbFloat 8s ease-in-out infinite; }
+        .orb2 { width: 300px; height: 300px; background: #8b5cf6; bottom: -80px; left: -80px; animation: orbFloat 10s ease-in-out infinite reverse; }
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -30px) scale(1.1); }
+        }
+
+        .container {
+            position: relative; z-index: 1;
+            width: 100%; max-width: 520px;
+            padding: 20px;
+        }
+
+        .card {
+            background: rgba(20, 20, 40, 0.85);
+            border: 1px solid rgba(56, 189, 248, 0.12);
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            padding: 40px 32px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+
+        .logo-icon {
+            width: 56px; height: 56px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+        .subtitle {
+            font-size: 13px;
+            color: rgba(255,255,255,0.45);
+            margin-bottom: 28px;
+        }
+
+        /* 时间戳区域 */
+        .timestamp-section {
+            background: rgba(59, 130, 246, 0.06);
+            border: 1px solid rgba(59, 130, 246, 0.12);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .ts-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(56, 189, 248, 0.6);
+            margin-bottom: 10px;
+        }
+        .ts-date {
+            font-size: 15px;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 4px;
+            font-variant-numeric: tabular-nums;
+        }
+        .ts-time {
+            font-size: 36px;
+            font-weight: 700;
+            color: #38bdf8;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 2px;
+            text-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+        }
+        .ts-ms {
+            font-size: 14px;
+            color: rgba(56, 189, 248, 0.5);
+            font-variant-numeric: tabular-nums;
+        }
+        .ts-unix {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(59, 130, 246, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .ts-unix-label {
+            font-size: 10px;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .ts-unix-value {
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            font-family: "SF Mono", "Fira Code", monospace;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .ts-unix-value:hover { color: #38bdf8; }
+
+        /* 时间戳格式标识 */
+        .ts-format-tag {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 2px 8px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 4px;
+            font-size: 10px;
+            color: rgba(16, 185, 129, 0.6);
+            letter-spacing: 0.5px;
+        }
+
+        /* 倒计时 */
+        .countdown-section {
+            margin-bottom: 28px;
+        }
+        .countdown-ring {
+            width: 80px; height: 80px;
+            margin: 0 auto 14px;
+            position: relative;
+        }
+        .countdown-ring svg {
+            transform: rotate(-90deg);
+        }
+        .countdown-ring .ring-bg {
+            stroke: rgba(59, 130, 246, 0.1);
+        }
+        .countdown-ring .ring-fg {
+            stroke: #3b82f6;
+            transition: stroke-dashoffset 1s linear;
+        }
+        .countdown-num {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .countdown-text {
+            font-size: 13px;
+            color: rgba(255,255,255,0.45);
+        }
+
+        /* 目标链接 */
+        .target-section {
+            background: rgba(139, 92, 246, 0.06);
+            border: 1px solid rgba(139, 92, 246, 0.12);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .target-icon {
+            width: 32px; height: 32px;
+            background: rgba(139, 92, 246, 0.15);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .target-info { flex: 1; min-width: 0; text-align: left; }
+        .target-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(139, 92, 246, 0.6);
+            margin-bottom: 2px;
+        }
+        .target-url {
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 按钮 */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 28px rgba(59, 130, 246, 0.45);
+        }
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-secondary {
+            display: inline-block;
+            margin-top: 14px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.3);
+            cursor: pointer;
+            transition: color 0.2s;
+            background: none; border: none;
+            text-decoration: underline;
+        }
+        .btn-secondary:hover { color: rgba(255,255,255,0.6); }
+
+        /* 错误状态 */
+        .error-card {
+            display: none;
+        }
+        .error-card.show {
+            display: block;
+        }
+        .error-card .logo-icon {
+            background: linear-gradient(135deg, #ef4444, #f97316);
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+        }
+        .error-msg {
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+
+        /* 加载状态 */
+        .loading-card {
+            display: none;
+        }
+        .loading-card.show {
+            display: block;
+        }
+        .loading-spinner {
+            width: 40px; height: 40px;
+            margin: 0 auto 16px;
+            border: 3px solid rgba(59, 130, 246, 0.15);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text {
+            font-size: 14px; color: rgba(255,255,255,0.4);
+        }
+
+        /* 访问记录 */
+        .log-section {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .log-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.25);
+            cursor: pointer;
+            transition: color 0.2s;
+            background: none; border: none;
+            padding: 6px 12px;
+            margin: 0 auto;
+        }
+        .log-toggle:hover { color: rgba(255,255,255,0.5); }
+        .log-toggle .arrow { transition: transform 0.2s; display: inline-block; }
+        .log-toggle.open .arrow { transform: rotate(180deg); }
+
+        .log-list {
+            display: none;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+        .log-list.show { display: block; }
+        .log-item {
+            font-size: 11px;
+            color: rgba(255,255,255,0.35);
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-variant-numeric: tabular-nums;
+        }
+        .log-item:last-child { border-bottom: none; }
+        .log-item .log-time { color: #38bdf8; }
+
+        /* 进度条 */
+        .progress-bar {
+            position: fixed;
+            top: 0; left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            z-index: 100;
+            transition: width 1s linear;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        /* 自定义滚动条 */
+        .log-list::-webkit-scrollbar { width: 4px; }
+        .log-list::-webkit-scrollbar-track { background: transparent; }
+        .log-list::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.2); border-radius: 2px; }
+
+        @media (max-width: 480px) {
+            .card { padding: 28px 20px; }
+            .ts-time { font-size: 28px; }
+            h1 { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="glow-orb orb1"></div>
+<div class="glow-orb orb2"></div>
+<div class="progress-bar" id="progressBar" style="width: 0%"></div>
+
+<div class="container">
+    <!-- 加载中 -->
+    <div class="card loading-card show" id="loadingCard">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">正在加载配置...</div>
+    </div>
+
+    <!-- 正常跳转卡片 -->
+    <div class="card" id="redirectCard" style="display:none;">
+        <div class="logo-icon">🔗</div>
+        <h1 id="pageTitle">安全跳转中</h1>
+        <p class="subtitle">正在为您验证并跳转到目标页面</p>
+
+        <div class="timestamp-section">
+            <div class="ts-label">访问时间戳</div>
+            <div class="ts-date" id="tsDate">--</div>
+            <div class="ts-time" id="tsTime">--:--:--</div>
+            <div class="ts-ms" id="tsMs">.000</div>
+            <div class="ts-unix">
+                <span class="ts-unix-label">Unix</span>
+                <span class="ts-unix-value" id="tsUnix" title="点击复制" onclick="copyUnix()">--</span>
+            </div>
+            <div class="ts-format-tag" id="tsFormatTag">--</div>
+        </div>
+
+        <div class="countdown-section">
+            <div class="countdown-ring">
+                <svg width="80" height="80" viewBox="0 0 80 80">
+                    <circle class="ring-bg" cx="40" cy="40" r="34" fill="none" stroke-width="4"/>
+                    <circle class="ring-fg" id="ringFg" cx="40" cy="40" r="34" fill="none" stroke-width="4"
+                        stroke-dasharray="213.6" stroke-dashoffset="0" stroke-linecap="round"/>
+                </svg>
+                <div class="countdown-num" id="countdownNum">5</div>
+            </div>
+            <div class="countdown-text">秒后自动跳转</div>
+        </div>
+
+        <div class="target-section" id="targetSection">
+            <div class="target-icon">🎯</div>
+            <div class="target-info">
+                <div class="target-label">目标地址</div>
+                <div class="target-url" id="targetUrl" title="">--</div>
+            </div>
+        </div>
+
+        <button class="btn-primary" id="btnRedirect" onclick="doRedirect()">
+            立即跳转 →
+        </button>
+        <button class="btn-secondary" id="btnCancel" onclick="cancelRedirect()">
+            取消跳转
+        </button>
+
+        <div class="log-section">
+            <button class="log-toggle" id="logToggle" onclick="toggleLog()">
+                <span class="arrow">▼</span> 访问记录
+            </button>
+            <div class="log-list" id="logList"></div>
+        </div>
+    </div>
+
+    <!-- 错误卡片 -->
+    <div class="card error-card" id="errorCard">
+        <div class="logo-icon">⚠️</div>
+        <h1>链接无效</h1>
+        <p class="error-msg" id="errorMsg">
+            未检测到目标跳转地址。<br>
+            请确认您使用的是完整的中转链接。
+        </p>
+        <button class="btn-primary" onclick="history.back()">
+            ← 返回上页
+        </button>
+    </div>
+</div>
+
+<script>
+// ========== 配置 ==========
+const REPO = 'a19138082180-byte/schedule-page';
+const RAW_BASE = 'https://raw.githubusercontent.com/' + REPO + '/main';
+const CIRCUMFERENCE = 2 * Math.PI * 34; // ≈ 213.6
+
+let countdown = 5;
+let countdownTimer = null;
+let targetUrl = '';
+let finalUrl = ''; // 最终跳转URL（已替换时间戳）
+let isCancelled = false;
+let config = null; // 从links.json加载的配置
+
+// ========== 解析配置 ==========
+async function loadConfig() {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('c');
+
+    // 模式1: 通过短代码从 links.json 加载
+    if (code) {
+        try {
+            const resp = await fetch(RAW_BASE + '/links.json?t=' + Date.now());
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data[code]) {
+                    return data[code];
+                } else {
+                    showError('链接代码 #' + code + ' 不存在或已被删除。');
+                    return null;
+                }
+            }
+        } catch (e) {
+            console.error('Failed to fetch links.json:', e);
+            showError('无法加载链接配置，请检查网络连接后重试。');
+            return null;
+        }
+    }
+
+    // 模式2: 直接通过 URL 参数传递（兼容旧模式）
+    let url = params.get('url') || params.get('target') || params.get('link') || '';
+    if (!url) {
+        const hash = window.location.hash.substring(1);
+        if (hash && hash.startsWith('http')) {
+            url = hash;
+        }
+    }
+
+    if (url) {
+        return {
+            url: url,
+            tsFormat: params.get('f') || 'unix_ms',
+            tzOffset: parseInt(params.get('tz')) || 8,
+            countdown: parseInt(params.get('cd')) || 5,
+            title: params.get('t') || '安全跳转中'
+        };
+    }
+
+    return null;
+}
+
+// ========== 时间戳生成 ==========
+function generateTimestamp(date, format, tzOffset) {
+    const tz = tzOffset || 0;
+    const utc = date.getTime() + date.getTimezoneOffset() * 60000;
+    const local = new Date(utc + tz * 3600000);
+
+    switch (format) {
+        case 'unix':
+            return Math.floor(date.getTime() / 1000).toString();
+        case 'unix_ms':
+            return date.getTime().toString();
+        case 'iso':
+            return local.toISOString().replace('Z', formatTzOffset(tz));
+        case 'date':
+            return local.getFullYear().toString() +
+                   String(local.getMonth() + 1).padStart(2, '0') +
+                   String(local.getDate()).padStart(2, '0');
+        case 'datetime':
+            return local.getFullYear().toString() +
+                   String(local.getMonth() + 1).padStart(2, '0') +
+                   String(local.getDate()).padStart(2, '0') +
+                   String(local.getHours()).padStart(2, '0') +
+                   String(local.getMinutes()).padStart(2, '0') +
+                   String(local.getSeconds()).padStart(2, '0');
+        default:
+            return date.getTime().toString();
+    }
+}
+
+function formatTzOffset(offset) {
+    const sign = offset >= 0 ? '+' : '-';
+    const abs = Math.abs(offset);
+    const h = String(Math.floor(abs)).padStart(2, '0');
+    const m = String((abs % 1) * 60).padStart(2, '0');
+    return sign + h + ':' + m;
+}
+
+function getFormatLabel(fmt) {
+    const map = { unix_ms: 'Unix毫秒', unix: 'Unix秒', iso: 'ISO 8601', date: '日期', datetime: '日期时间' };
+    return map[fmt] || fmt;
+}
+
+// ========== 构建最终跳转URL ==========
+function buildFinalUrl() {
+    if (!config) return '';
+    const now = new Date();
+    const ts = generateTimestamp(now, config.tsFormat, config.tzOffset);
+    const url = config.url;
+
+    if (url.includes('{{timestamp}}')) {
+        return url.replace('{{timestamp}}', ts);
+    } else {
+        // 如果没有占位符，追加到URL末尾
+        const sep = url.includes('?') ? '&' : '?';
+        return url + sep + 't=' + ts;
+    }
+}
+
+// ========== 时间戳更新 ==========
+function updateTimestamp() {
+    const now = new Date();
+    const tz = config ? config.tzOffset : 8;
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    const local = new Date(utc + tz * 3600000);
+
+    const year = local.getFullYear();
+    const month = String(local.getMonth() + 1).padStart(2, '0');
+    const day = String(local.getDate()).padStart(2, '0');
+    const weekDay = ['日', '一', '二', '三', '四', '五', '六'][local.getDay()];
+    const hours = String(local.getHours()).padStart(2, '0');
+    const minutes = String(local.getMinutes()).padStart(2, '0');
+    const seconds = String(local.getSeconds()).padStart(2, '0');
+    const ms = String(local.getMilliseconds()).padStart(3, '0');
+
+    document.getElementById('tsDate').textContent = `${year}-${month}-${day}  周${weekDay}`;
+    document.getElementById('tsTime').textContent = `${hours}:${minutes}:${seconds}`;
+    document.getElementById('tsMs').textContent = `.${ms}`;
+    document.getElementById('tsUnix').textContent = Math.floor(now.getTime() / 1000);
+
+    // 每次更新时间戳时，同时更新最终URL
+    finalUrl = buildFinalUrl();
+}
+
+// ========== 复制 Unix 时间戳 ==========
+function copyUnix() {
+    const text = document.getElementById('tsUnix').textContent;
+    navigator.clipboard.writeText(text).catch(() => {});
+    const el = document.getElementById('tsUnix');
+    const original = el.textContent;
+    el.textContent = '已复制!';
+    el.style.color = '#38bdf8';
+    setTimeout(() => {
+        el.textContent = original;
+        el.style.color = '';
+    }, 1500);
+}
+
+// ========== 倒计时 ==========
+function startCountdown() {
+    const ringFg = document.getElementById('ringFg');
+    const numEl = document.getElementById('countdownNum');
+    const progressEl = document.getElementById('progressBar');
+
+    countdownTimer = setInterval(() => {
+        countdown--;
+        if (countdown <= 0) {
+            clearInterval(countdownTimer);
+            doRedirect();
+            return;
+        }
+        numEl.textContent = countdown;
+        const offset = CIRCUMFERENCE * (1 - countdown / (config ? config.countdown : 5));
+        ringFg.style.strokeDashoffset = -offset;
+        progressEl.style.width = ((config ? config.countdown : 5) - countdown) / (config ? config.countdown : 5) * 100 + '%';
+    }, 1000);
+}
+
+// ========== 执行跳转 ==========
+function doRedirect() {
+    if (isCancelled) return;
+    clearInterval(countdownTimer);
+    logVisit('跳转');
+    // 使用最新的finalUrl（包含实时时间戳）
+    if (finalUrl) {
+        window.location.href = finalUrl;
+    }
+}
+
+// ========== 取消跳转 ==========
+function cancelRedirect() {
+    isCancelled = true;
+    clearInterval(countdownTimer);
+    document.getElementById('countdownNum').textContent = '—';
+    document.getElementById('countdownNum').style.color = 'rgba(255,255,255,0.3)';
+    document.querySelector('.countdown-text').textContent = '已取消自动跳转';
+    document.getElementById('progressBar').style.width = '0%';
+    document.getElementById('btnRedirect').textContent = '手动跳转 →';
+    document.getElementById('btnCancel').style.display = 'none';
+    logVisit('取消');
+}
+
+// ========== 显示错误 ==========
+function showError(msg) {
+    document.getElementById('loadingCard').style.display = 'none';
+    document.getElementById('redirectCard').style.display = 'none';
+    document.getElementById('errorCard').classList.add('show');
+    if (msg) {
+        document.getElementById('errorMsg').innerHTML = msg;
+    }
+}
+
+// ========== 访问记录 ==========
+function logVisit(action) {
+    const now = new Date();
+    const timeStr = now.toLocaleString('zh-CN', { hour12: false });
+    const logs = JSON.parse(localStorage.getItem('redirect_logs') || '[]');
+    logs.unshift({
+        time: timeStr,
+        action: action,
+        target: targetUrl ? targetUrl.substring(0, 50) + '...' : '无'
+    });
+    if (logs.length > 50) logs.length = 50;
+    localStorage.setItem('redirect_logs', JSON.stringify(logs));
+}
+
+function renderLogs() {
+    const logs = JSON.parse(localStorage.getItem('redirect_logs') || '[]');
+    const container = document.getElementById('logList');
+    if (logs.length === 0) {
+        container.innerHTML = '<div class="log-item" style="text-align:center;color:rgba(255,255,255,0.2)">暂无记录</div>';
+        return;
+    }
+    container.innerHTML = logs.map(log =>
+        `<div class="log-item"><span class="log-time">${log.time}</span> ${log.action} → ${log.target}</div>`
+    ).join('');
+}
+
+function toggleLog() {
+    const btn = document.getElementById('logToggle');
+    const list = document.getElementById('logList');
+    btn.classList.toggle('open');
+    list.classList.toggle('show');
+    if (list.classList.contains('show')) {
+        renderLogs();
+    }
+}
+
+// ========== 初始化 ==========
+async function init() {
+    config = await loadConfig();
+
+    if (!config) {
+        showError('未检测到目标跳转地址。<br>请确认您使用的是完整的中转链接。<br><br>格式：<code style="color:#38bdf8;font-size:12px;">?c=链接代码</code> 或 <code style="color:#38bdf8;font-size:12px;">?url=目标地址</code>');
+        return;
+    }
+
+    // 隐藏加载，显示跳转卡片
+    document.getElementById('loadingCard').style.display = 'none';
+    document.getElementById('redirectCard').style.display = '';
+
+    // 设置页面标题
+    if (config.title) {
+        document.getElementById('pageTitle').textContent = config.title;
+        document.title = config.title;
+    }
+
+    // 设置时间戳格式标签
+    document.getElementById('tsFormatTag').textContent = getFormatLabel(config.tsFormat) + ' | UTC' + (config.tzOffset >= 0 ? '+' : '') + config.tzOffset;
+
+    // 设置目标URL显示
+    targetUrl = config.url;
+    document.getElementById('targetUrl').textContent = targetUrl.length > 60 ? targetUrl.substring(0, 60) + '...' : targetUrl;
+    document.getElementById('targetUrl').title = targetUrl;
+
+    // 设置倒计时
+    countdown = config.countdown || 5;
+    document.getElementById('countdownNum').textContent = countdown;
+
+    // 构建初始URL
+    finalUrl = buildFinalUrl();
+
+    // 启动时间戳更新（实时替换{{timestamp}}）
+    updateTimestamp();
+    setInterval(updateTimestamp, 100);
+
+    // 记录访问
+    logVisit('访问');
+
+    // 启动倒计时
+    startCountdown();
+}
+
+init();
+</script>
+
+</body>
+</html>
