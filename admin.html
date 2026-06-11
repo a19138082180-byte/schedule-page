@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中转站管理后台</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #0a0e1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* 动态背景 */
+        .bg-grid {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background-image:
+                linear-gradient(rgba(56, 189, 248, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(56, 189, 248, 0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+        .glow-orb {
+            position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.1; z-index: 0; pointer-events: none;
+        }
+        .orb1 { width: 500px; height: 500px; background: #3b82f6; top: -150px; right: -100px; }
+        .orb2 { width: 400px; height: 400px; background: #8b5cf6; bottom: -100px; left: -100px; }
+
+        .page-wrap {
+            position: relative; z-index: 1;
+            max-width: 800px; margin: 0 auto; padding: 24px 16px 60px;
+        }
+
+        /* 头部 */
+        .header {
+            text-align: center;
+            padding: 40px 0 32px;
+        }
+        .header-icon {
+            width: 64px; height: 64px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+        .header h1 {
+            font-size: 26px; font-weight: 700; color: #fff;
+            margin-bottom: 6px;
+        }
+        .header p {
+            font-size: 14px; color: rgba(255,255,255,0.4);
+        }
+
+        /* 卡片通用 */
+        .card {
+            background: rgba(15, 20, 40, 0.8);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            padding: 28px 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .card-title {
+            font-size: 16px; font-weight: 600; color: #fff;
+            margin-bottom: 20px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .card-title .icon { font-size: 20px; }
+        .card-title .badge {
+            font-size: 10px; font-weight: 500;
+            padding: 2px 8px; border-radius: 20px;
+            background: rgba(59, 130, 246, 0.15);
+            color: #38bdf8;
+            letter-spacing: 0.5px;
+        }
+
+        /* 表单 */
+        .form-group { margin-bottom: 18px; }
+        .form-label {
+            display: block; font-size: 13px; font-weight: 500;
+            color: rgba(255,255,255,0.6); margin-bottom: 6px;
+        }
+        .form-label .hint {
+            font-weight: 400; color: rgba(255,255,255,0.3); font-size: 11px;
+        }
+        .form-input, .form-textarea, .form-select {
+            width: 100%; padding: 12px 14px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(59, 130, 246, 0.12);
+            border-radius: 10px;
+            color: #e0e0e0; font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+            font-family: inherit;
+        }
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            border-color: rgba(59, 130, 246, 0.4);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+        }
+        .form-textarea {
+            min-height: 80px; resize: vertical;
+            font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+            font-size: 13px; line-height: 1.5;
+        }
+        .form-select {
+            cursor: pointer;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+        .form-select option { background: #1a1f35; color: #e0e0e0; }
+        .form-row {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+        }
+        @media (max-width: 520px) {
+            .form-row { grid-template-columns: 1fr; }
+        }
+
+        /* 占位符提示 */
+        .placeholder-hint {
+            display: flex; align-items: flex-start; gap: 8px;
+            padding: 10px 14px;
+            background: rgba(59, 130, 246, 0.06);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            border-radius: 8px;
+            margin-top: 8px;
+            font-size: 12px; color: rgba(255,255,255,0.45);
+            line-height: 1.6;
+        }
+        .placeholder-hint .tag {
+            display: inline-block;
+            padding: 1px 6px; border-radius: 4px;
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            font-family: monospace; font-size: 11px;
+            white-space: nowrap;
+        }
+
+        /* 按钮 */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 12px 24px;
+            border: none; border-radius: 10px;
+            font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+            font-family: inherit;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+            width: 100%;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(59, 130, 246, 0.4);
+        }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-primary:disabled {
+            opacity: 0.5; cursor: not-allowed;
+            transform: none !important;
+        }
+        .btn-sm {
+            padding: 6px 14px; font-size: 12px; font-weight: 500;
+            border-radius: 8px;
+        }
+        .btn-ghost {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.5);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .btn-ghost:hover {
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.7);
+        }
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.15);
+        }
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+        .btn-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.15);
+        }
+        .btn-success:hover {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        /* 生成结果 */
+        .result-box {
+            display: none;
+            margin-top: 20px;
+            padding: 18px;
+            background: rgba(16, 185, 129, 0.06);
+            border: 1px solid rgba(16, 185, 129, 0.15);
+            border-radius: 12px;
+        }
+        .result-box.show { display: block; }
+        .result-label {
+            font-size: 11px; text-transform: uppercase;
+            letter-spacing: 1px; color: rgba(16, 185, 129, 0.6);
+            margin-bottom: 8px;
+        }
+        .result-link {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 10px;
+        }
+        .result-url {
+            flex: 1; min-width: 0;
+            padding: 10px 14px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            font-size: 13px; color: #34d399;
+            font-family: "SF Mono", "Fira Code", monospace;
+            white-space: nowrap; overflow-x: auto;
+            cursor: text; user-select: all;
+        }
+        .result-url::-webkit-scrollbar { height: 3px; }
+        .result-url::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+        .copy-btn {
+            flex-shrink: 0;
+            width: 38px; height: 38px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 8px;
+            color: #34d399; font-size: 16px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .copy-btn:hover { background: rgba(16, 185, 129, 0.25); }
+        .copy-btn.copied { background: #10b981; color: #fff; }
+
+        /* 链接列表 */
+        .link-list { margin-top: 4px; }
+        .link-empty {
+            text-align: center; padding: 40px 20px;
+            color: rgba(255,255,255,0.2); font-size: 14px;
+        }
+        .link-empty .icon { font-size: 36px; margin-bottom: 10px; display: block; }
+        .link-item {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: border-color 0.2s;
+        }
+        .link-item:hover {
+            border-color: rgba(59, 130, 246, 0.15);
+        }
+        .link-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .link-code {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 3px 10px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 6px;
+            font-size: 13px; font-weight: 600;
+            color: #38bdf8;
+            font-family: "SF Mono", "Fira Code", monospace;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .link-code:hover { background: rgba(59, 130, 246, 0.2); }
+        .link-code .copy-icon { font-size: 11px; opacity: 0.5; }
+        .link-actions {
+            display: flex; gap: 6px;
+        }
+        .link-target {
+            font-size: 12px; color: rgba(255,255,255,0.35);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            margin-bottom: 8px;
+            font-family: "SF Mono", "Fira Code", monospace;
+        }
+        .link-meta {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+        }
+        .meta-tag {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 2px 8px; border-radius: 4px;
+            font-size: 11px; color: rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.04);
+        }
+        .meta-tag .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+        }
+        .meta-tag .dot.blue { background: #3b82f6; }
+        .meta-tag .dot.green { background: #10b981; }
+        .meta-tag .dot.amber { background: #f59e0b; }
+        .meta-tag .dot.purple { background: #8b5cf6; }
+        .link-short-url {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: rgba(16, 185, 129, 0.06);
+            border-radius: 6px;
+            font-size: 12px; color: #34d399;
+            font-family: "SF Mono", "Fira Code", monospace;
+            display: flex; align-items: center; gap: 6px;
+            cursor: pointer; transition: background 0.2s;
+            white-space: nowrap; overflow-x: auto;
+        }
+        .link-short-url:hover { background: rgba(16, 185, 129, 0.12); }
+        .link-short-url::-webkit-scrollbar { height: 2px; }
+        .link-short-url::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+        /* Token 配置 */
+        .token-section {
+            margin-bottom: 20px;
+        }
+        .token-toggle {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 12px; color: rgba(255,255,255,0.3);
+            cursor: pointer; transition: color 0.2s;
+            background: none; border: none; font-family: inherit;
+            padding: 4px 0;
+        }
+        .token-toggle:hover { color: rgba(255,255,255,0.5); }
+        .token-toggle .arrow { transition: transform 0.2s; display: inline-block; font-size: 10px; }
+        .token-toggle.open .arrow { transform: rotate(180deg); }
+        .token-body { display: none; margin-top: 10px; }
+        .token-body.show { display: block; }
+        .token-status {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 11px; margin-top: 8px;
+        }
+        .token-status.ok {
+            background: rgba(16, 185, 129, 0.1); color: #34d399;
+        }
+        .token-status.err {
+            background: rgba(239, 68, 68, 0.1); color: #f87171;
+        }
+        .token-status.idle {
+            background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.3);
+        }
+        .token-status .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: currentColor;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed; top: 20px; right: 20px;
+            z-index: 9999; display: flex; flex-direction: column; gap: 8px;
+        }
+        .toast {
+            padding: 12px 20px;
+            background: rgba(15, 20, 40, 0.95);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 10px;
+            color: #e0e0e0; font-size: 13px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            animation: toastIn 0.3s ease-out;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .toast.success { border-color: rgba(16, 185, 129, 0.3); }
+        .toast.error { border-color: rgba(239, 68, 68, 0.3); }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* 编辑弹窗 */
+        .modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            width: 100%; max-width: 500px;
+            background: #111827;
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            border-radius: 16px;
+            padding: 28px 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            max-height: 80vh; overflow-y: auto;
+        }
+        .modal-title {
+            font-size: 18px; font-weight: 600; color: #fff;
+            margin-bottom: 20px;
+        }
+        .modal-actions {
+            display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;
+        }
+
+        /* 实时预览 */
+        .preview-section {
+            margin-top: 16px;
+            padding: 14px;
+            background: rgba(139, 92, 246, 0.06);
+            border: 1px solid rgba(139, 92, 246, 0.1);
+            border-radius: 10px;
+        }
+        .preview-label {
+            font-size: 11px; text-transform: uppercase;
+            letter-spacing: 1px; color: rgba(139, 92, 246, 0.5);
+            margin-bottom: 8px;
+        }
+        .preview-url {
+            font-size: 12px; color: rgba(255,255,255,0.5);
+            font-family: "SF Mono", "Fira Code", monospace;
+            word-break: break-all;
+            line-height: 1.6;
+        }
+        .preview-url .ts-highlight {
+            color: #38bdf8; background: rgba(56, 189, 248, 0.1);
+            padding: 1px 4px; border-radius: 3px;
+        }
+
+        /* 滚动条 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="glow-orb orb1"></div>
+<div class="glow-orb orb2"></div>
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="page-wrap">
+    <!-- 头部 -->
+    <div class="header">
+        <div class="header-icon">⚡</div>
+        <h1>中转站管理后台</h1>
+        <p>创建和管理您的短链接，实时修改时间戳</p>
+    </div>
+
+    <!-- Token 配置 -->
+    <div class="card">
+        <div class="token-section">
+            <button class="token-toggle" id="tokenToggle" onclick="toggleToken()">
+                <span class="arrow">▼</span> GitHub 令牌配置
+                <span class="token-status idle" id="tokenStatus">
+                    <span class="dot"></span> <span id="tokenStatusText">未配置</span>
+                </span>
+            </button>
+            <div class="token-body" id="tokenBody">
+                <div class="form-group">
+                    <label class="form-label">Personal Access Token <span class="hint">(需要 repo 权限)</span></label>
+                    <div style="display:flex;gap:8px;">
+                        <input type="password" class="form-input" id="tokenInput"
+                            placeholder="ghp_xxxxxxxxxxxx" style="flex:1;" autocomplete="off">
+                        <button class="btn btn-sm btn-ghost" onclick="toggleTokenVisibility()" id="tokenVisBtn">👁</button>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-sm btn-success" onclick="saveToken()">💾 保存令牌</button>
+                    <button class="btn btn-sm btn-ghost" onclick="testToken()">🔗 测试连接</button>
+                </div>
+                <div style="margin-top:10px;">
+                    <p style="font-size:11px;color:rgba(255,255,255,0.25);line-height:1.6;">
+                        令牌仅保存在您的浏览器本地存储中，不会上传至任何服务器。
+                        需要具有 <code style="color:#38bdf8;">repo</code> 权限的 Token 才能管理链接。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 创建链接 -->
+    <div class="card">
+        <div class="card-title">
+            <span class="icon">🔗</span> 创建短链接
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">目标长链接 <span class="hint">（在时间戳位置使用 {{timestamp}} 占位符）</span></label>
+            <textarea class="form-textarea" id="targetUrl"
+                placeholder="https://www.amazon.com/dp/B08N5WRWNW?tag=affiliate&t={{timestamp}}"></textarea>
+            <div class="placeholder-hint">
+                <span>💡</span>
+                <span>在 URL 中需要插入时间戳的位置放置 <span class="tag">{{timestamp}}</span>，用户访问时将自动替换为实时时间戳。如果不使用占位符，时间戳将追加到 URL 末尾。</span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">时间戳格式</label>
+                <select class="form-select" id="tsFormat">
+                    <option value="unix_ms">Unix 毫秒 (1749637200123)</option>
+                    <option value="unix">Unix 秒 (1749637200)</option>
+                    <option value="iso">ISO 8601 (2026-06-11T16:00:00+08:00)</option>
+                    <option value="date">日期 (20260611)</option>
+                    <option value="datetime">日期时间 (20260611160000)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">时区</label>
+                <select class="form-select" id="tzOffset">
+                    <option value="8">UTC+8 (北京时间)</option>
+                    <option value="0">UTC+0 (格林威治)</option>
+                    <option value="-5">UTC-5 (美东时间)</option>
+                    <option value="-8">UTC-8 (美西时间)</option>
+                    <option value="9">UTC+9 (东京时间)</option>
+                    <option value="1">UTC+1 (中欧时间)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">倒计时（秒）</label>
+                <input type="number" class="form-input" id="countdown" value="5" min="1" max="60">
+            </div>
+            <div class="form-group">
+                <label class="form-label">页面标题 <span class="hint">（可选）</span></label>
+                <input type="text" class="form-input" id="pageTitle" placeholder="安全跳转中">
+            </div>
+        </div>
+
+        <!-- 实时预览 -->
+        <div class="preview-section">
+            <div class="preview-label">目标链接预览</div>
+            <div class="preview-url" id="urlPreview">--</div>
+        </div>
+
+        <button class="btn btn-primary" id="createBtn" onclick="createLink()" style="margin-top:20px;">
+            ⚡ 生成短链接
+        </button>
+
+        <!-- 生成结果 -->
+        <div class="result-box" id="resultBox">
+            <div class="result-label">短链接已生成</div>
+            <div class="result-link">
+                <div class="result-url" id="resultUrl"></div>
+                <button class="copy-btn" id="copyBtn" onclick="copyResult()" title="复制链接">📋</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 已创建的链接 -->
+    <div class="card">
+        <div class="card-title">
+            <span class="icon">📂</span> 已创建的链接
+            <span class="badge" id="linkCount">0</span>
+        </div>
+        <div class="link-list" id="linkList">
+            <div class="link-empty">
+                <span class="icon">📭</span>
+                还没有创建任何链接
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑弹窗 -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <div class="modal-title">编辑链接</div>
+        <div class="form-group">
+            <label class="form-label">目标长链接</label>
+            <textarea class="form-textarea" id="editUrl"></textarea>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">时间戳格式</label>
+                <select class="form-select" id="editFormat">
+                    <option value="unix_ms">Unix 毫秒</option>
+                    <option value="unix">Unix 秒</option>
+                    <option value="iso">ISO 8601</option>
+                    <option value="date">日期</option>
+                    <option value="datetime">日期时间</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">时区</label>
+                <select class="form-select" id="editTz">
+                    <option value="8">UTC+8</option>
+                    <option value="0">UTC+0</option>
+                    <option value="-5">UTC-5</option>
+                    <option value="-8">UTC-8</option>
+                    <option value="9">UTC+9</option>
+                    <option value="1">UTC+1</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">倒计时（秒）</label>
+                <input type="number" class="form-input" id="editCountdown" min="1" max="60">
+            </div>
+            <div class="form-group">
+                <label class="form-label">页面标题</label>
+                <input type="text" class="form-input" id="editTitle">
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-sm btn-ghost" onclick="closeEditModal()">取消</button>
+            <button class="btn btn-sm btn-success" onclick="saveEdit()">💾 保存修改</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ========== 配置 ==========
+const REPO = 'a19138082180-byte/schedule-page';
+const API_BASE = 'https://api.github.com/repos/' + REPO;
+const PAGES_BASE = 'https://a19138082180-byte.github.io/schedule-page';
+const REDIRECT_PAGE = PAGES_BASE + '/redirect.html';
+
+// ========== 状态 ==========
+let token = localStorage.getItem('gh_admin_token') || '';
+let links = {};
+let linksSha = null;
+let editingCode = null;
+
+// ========== Token 管理 ==========
+function toggleToken() {
+    const btn = document.getElementById('tokenToggle');
+    const body = document.getElementById('tokenBody');
+    btn.classList.toggle('open');
+    body.classList.toggle('show');
+}
+
+function toggleTokenVisibility() {
+    const input = document.getElementById('tokenInput');
+    const btn = document.getElementById('tokenVisBtn');
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🔒';
+    } else {
+        input.type = 'password';
+        btn.textContent = '👁';
+    }
+}
+
+function saveToken() {
+    const val = document.getElementById('tokenInput').value.trim();
+    if (!val) { showToast('请输入令牌', 'error'); return; }
+    token = val;
+    localStorage.setItem('gh_admin_token', token);
+    updateTokenStatus('idle', '已保存');
+    showToast('令牌已保存', 'success');
+    fetchLinks();
+}
+
+async function testToken() {
+    if (!token) { showToast('请先输入令牌', 'error'); return; }
+    updateTokenStatus('idle', '测试中...');
+    try {
+        const resp = await fetch('https://api.github.com/user', {
+            headers: { 'Authorization': 'token ' + token }
+        });
+        if (resp.ok) {
+            const data = await resp.json();
+            updateTokenStatus('ok', '已连接 (' + data.login + ')');
+            showToast('连接成功：' + data.login, 'success');
+        } else {
+            updateTokenStatus('err', '认证失败');
+            showToast('令牌无效或权限不足', 'error');
+        }
+    } catch (e) {
+        updateTokenStatus('err', '网络错误');
+        showToast('网络连接失败', 'error');
+    }
+}
+
+function updateTokenStatus(type, text) {
+    const el = document.getElementById('tokenStatus');
+    const txt = document.getElementById('tokenStatusText');
+    el.className = 'token-status ' + type;
+    txt.textContent = text;
+}
+
+// ========== GitHub API ==========
+async function apiCall(method, path, body) {
+    const opts = {
+        method: method,
+        headers: {
+            'Authorization': 'token ' + token,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+        }
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const resp = await fetch(API_BASE + path, opts);
+    return resp;
+}
+
+async function fetchLinks() {
+    if (!token) return;
+    try {
+        const resp = await apiCall('GET', '/contents/links.json');
+        if (resp.ok) {
+            const data = await resp.json();
+            linksSha = data.sha;
+            const content = JSON.parse(atob(data.content));
+            links = content;
+        } else if (resp.status === 404) {
+            links = {};
+            linksSha = null;
+        }
+    } catch (e) {
+        console.error('Fetch links error:', e);
+    }
+    renderLinks();
+}
+
+async function saveLinksToGitHub() {
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(links, null, 2))));
+    const body = {
+        message: 'Update links.json - ' + new Date().toISOString(),
+        content: content
+    };
+    if (linksSha) body.sha = linksSha;
+
+    const resp = await apiCall('PUT', '/contents/links.json', body);
+    if (resp.ok) {
+        const data = await resp.json();
+        linksSha = data.content.sha;
+        return true;
+    } else {
+        const err = await resp.json();
+        throw new Error(err.message || '保存失败');
+    }
+}
+
+// ========== 链接管理 ==========
+function generateCode() {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+function getFormatLabel(fmt) {
+    const map = { unix_ms: 'Unix毫秒', unix: 'Unix秒', iso: 'ISO 8601', date: '日期', datetime: '日期时间' };
+    return map[fmt] || fmt;
+}
+
+function getTzLabel(tz) {
+    const map = { '8': 'UTC+8', '0': 'UTC+0', '-5': 'UTC-5', '-8': 'UTC-8', '9': 'UTC+9', '1': 'UTC+1' };
+    return map[tz] || ('UTC' + (tz >= 0 ? '+' : '') + tz);
+}
+
+async function createLink() {
+    const btn = document.getElementById('createBtn');
+    const url = document.getElementById('targetUrl').value.trim();
+    if (!url) { showToast('请输入目标长链接', 'error'); return; }
+    if (!token) { showToast('请先配置 GitHub 令牌', 'error'); return; }
+
+    const fmt = document.getElementById('tsFormat').value;
+    const tz = document.getElementById('tzOffset').value;
+    const cd = parseInt(document.getElementById('countdown').value) || 5;
+    const title = document.getElementById('pageTitle').value.trim() || '安全跳转中';
+
+    const code = generateCode();
+
+    btn.disabled = true;
+    btn.textContent = '⏳ 生成中...';
+
+    try {
+        await fetchLinks(); // 刷新最新数据
+
+        links[code] = {
+            url: url,
+            tsFormat: fmt,
+            tzOffset: parseInt(tz),
+            countdown: cd,
+            title: title,
+            createdAt: new Date().toISOString()
+        };
+
+        await saveLinksToGitHub();
+
+        const shortUrl = REDIRECT_PAGE + '?c=' + code;
+
+        // 显示结果
+        document.getElementById('resultUrl').textContent = shortUrl;
+        document.getElementById('resultBox').classList.add('show');
+        document.getElementById('copyBtn').classList.remove('copied');
+        document.getElementById('copyBtn').textContent = '📋';
+
+        showToast('短链接已生成！', 'success');
+        renderLinks();
+    } catch (e) {
+        showToast('生成失败：' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '⚡ 生成短链接';
+    }
+}
+
+function copyResult() {
+    const url = document.getElementById('resultUrl').textContent;
+    copyToClipboard(url, document.getElementById('copyBtn'));
+}
+
+function copyToClipboard(text, btnEl) {
+    navigator.clipboard.writeText(text).then(() => {
+        if (btnEl) {
+            if (btnEl.classList.contains('copy-btn')) {
+                btnEl.classList.add('copied');
+                btnEl.textContent = '✓';
+                setTimeout(() => {
+                    btnEl.classList.remove('copied');
+                    btnEl.textContent = '📋';
+                }, 2000);
+            }
+        }
+        showToast('已复制到剪贴板', 'success');
+    }).catch(() => {
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('已复制到剪贴板', 'success');
+    });
+}
+
+// ========== 渲染链接列表 ==========
+function renderLinks() {
+    const container = document.getElementById('linkList');
+    const codes = Object.keys(links);
+
+    document.getElementById('linkCount').textContent = codes.length;
+
+    if (codes.length === 0) {
+        container.innerHTML = '<div class="link-empty"><span class="icon">📭</span>还没有创建任何链接</div>';
+        return;
+    }
+
+    container.innerHTML = codes.map(code => {
+        const link = links[code];
+        const shortUrl = REDIRECT_PAGE + '?c=' + code;
+        const tsLabel = getFormatLabel(link.tsFormat);
+        const tzLabel = getTzLabel(String(link.tzOffset));
+        const hasTs = link.url.includes('{{timestamp}}');
+        const dateStr = new Date(link.createdAt).toLocaleDateString('zh-CN');
+
+        return `
+            <div class="link-item" data-code="${code}">
+                <div class="link-header">
+                    <div class="link-code" onclick="copyToClipboard('${shortUrl}')" title="点击复制短链接">
+                        #${code} <span class="copy-icon">📋</span>
+                    </div>
+                    <div class="link-actions">
+                        <button class="btn btn-sm btn-ghost" onclick="openEditModal('${code}')">✏️ 编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteLink('${code}')">🗑</button>
+                    </div>
+                </div>
+                <div class="link-target" title="${escHtml(link.url)}">${escHtml(link.url)}</div>
+                <div class="link-meta">
+                    ${hasTs ? '<span class="meta-tag"><span class="dot blue"></span> 实时时间戳</span>' : '<span class="meta-tag"><span class="dot amber"></span> 无占位符</span>'}
+                    <span class="meta-tag"><span class="dot green"></span> ${tsLabel}</span>
+                    <span class="meta-tag"><span class="dot purple"></span> ${tzLabel}</span>
+                    <span class="meta-tag">⏱ ${link.countdown || 5}s</span>
+                    <span class="meta-tag">${dateStr}</span>
+                </div>
+                <div class="link-short-url" onclick="copyToClipboard('${shortUrl}')" title="点击复制">
+                    🔗 ${shortUrl}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function escHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// ========== 编辑 ==========
+function openEditModal(code) {
+    editingCode = code;
+    const link = links[code];
+    document.getElementById('editUrl').value = link.url;
+    document.getElementById('editFormat').value = link.tsFormat;
+    document.getElementById('editTz').value = String(link.tzOffset);
+    document.getElementById('editCountdown').value = link.countdown || 5;
+    document.getElementById('editTitle').value = link.title || '';
+    document.getElementById('editModal').classList.add('show');
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('show');
+    editingCode = null;
+}
+
+async function saveEdit() {
+    if (!editingCode) return;
+    const code = editingCode;
+    const url = document.getElementById('editUrl').value.trim();
+    if (!url) { showToast('URL 不能为空', 'error'); return; }
+
+    links[code].url = url;
+    links[code].tsFormat = document.getElementById('editFormat').value;
+    links[code].tzOffset = parseInt(document.getElementById('editTz').value);
+    links[code].countdown = parseInt(document.getElementById('editCountdown').value) || 5;
+    links[code].title = document.getElementById('editTitle').value.trim() || '安全跳转中';
+    links[code].updatedAt = new Date().toISOString();
+
+    try {
+        await saveLinksToGitHub();
+        showToast('修改已保存！', 'success');
+        closeEditModal();
+        renderLinks();
+    } catch (e) {
+        showToast('保存失败：' + e.message, 'error');
+    }
+}
+
+async function deleteLink(code) {
+    if (!confirm('确定删除链接 #' + code + '？\n删除后短链接将失效。')) return;
+
+    delete links[code];
+    try {
+        await saveLinksToGitHub();
+        showToast('链接已删除', 'success');
+        renderLinks();
+    } catch (e) {
+        showToast('删除失败：' + e.message, 'error');
+    }
+}
+
+// ========== 实时预览 ==========
+function updatePreview() {
+    const url = document.getElementById('targetUrl').value.trim();
+    const fmt = document.getElementById('tsFormat').value;
+    const preview = document.getElementById('urlPreview');
+
+    if (!url) {
+        preview.textContent = '--';
+        return;
+    }
+
+    // 生成预览时间戳
+    const now = new Date();
+    const ts = generateTimestamp(now, fmt, 8);
+    const displayUrl = url.includes('{{timestamp}}')
+        ? url.replace('{{timestamp}}', '<span class="ts-highlight">' + ts + '</span>')
+        : url + '<span class="ts-highlight">&t=' + ts + '</span>';
+
+    preview.innerHTML = displayUrl;
+}
+
+function generateTimestamp(date, format, tzOffset) {
+    const tz = tzOffset || 0;
+    const utc = date.getTime() + date.getTimezoneOffset() * 60000;
+    const local = new Date(utc + tz * 3600000);
+
+    switch (format) {
+        case 'unix':
+            return Math.floor(date.getTime() / 1000).toString();
+        case 'unix_ms':
+            return date.getTime().toString();
+        case 'iso':
+            return local.toISOString().replace('Z', formatTzOffset(tz));
+        case 'date':
+            return local.getFullYear().toString() +
+                   String(local.getMonth() + 1).padStart(2, '0') +
+                   String(local.getDate()).padStart(2, '0');
+        case 'datetime':
+            return local.getFullYear().toString() +
+                   String(local.getMonth() + 1).padStart(2, '0') +
+                   String(local.getDate()).padStart(2, '0') +
+                   String(local.getHours()).padStart(2, '0') +
+                   String(local.getMinutes()).padStart(2, '0') +
+                   String(local.getSeconds()).padStart(2, '0');
+        default:
+            return date.getTime().toString();
+    }
+}
+
+function formatTzOffset(offset) {
+    const sign = offset >= 0 ? '+' : '-';
+    const abs = Math.abs(offset);
+    const h = String(Math.floor(abs)).padStart(2, '0');
+    const m = String((abs % 1) * 60).padStart(2, '0');
+    return sign + h + ':' + m;
+}
+
+// ========== Toast ==========
+function showToast(msg, type) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + (type || '');
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+    toast.innerHTML = icon + ' ' + msg;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(20px)';
+        toast.style.transition = 'all 0.3s';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// ========== 初始化 ==========
+document.addEventListener('DOMContentLoaded', async () => {
+    // 恢复 Token
+    if (token) {
+        document.getElementById('tokenInput').value = token;
+        updateTokenStatus('idle', '已保存');
+        // 展开令牌配置
+        document.getElementById('tokenToggle').classList.add('open');
+        document.getElementById('tokenBody').classList.add('show');
+        // 加载链接
+        await fetchLinks();
+    }
+
+    // 绑定预览更新
+    document.getElementById('targetUrl').addEventListener('input', updatePreview);
+    document.getElementById('tsFormat').addEventListener('change', updatePreview);
+    document.getElementById('tzOffset').addEventListener('change', updatePreview);
+
+    // 初始预览
+    updatePreview();
+
+    // 定时刷新预览（显示实时时间戳）
+    setInterval(updatePreview, 1000);
+});
+
+// 点击弹窗外部关闭
+document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditModal();
+});
+</script>
+
+</body>
+</html>
