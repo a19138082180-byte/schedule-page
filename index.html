@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>择吉时间段划分表</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #f5f5f7;
+            color: #1a1a2e;
+            line-height: 1.7;
+        }
+        .hero {
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d5e 100%);
+            color: #fff;
+            padding: 48px 24px 36px;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+        }
+        .hero p {
+            font-size: 15px;
+            opacity: 0.8;
+            max-width: 640px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 20px 60px;
+        }
+        .intro {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px 28px;
+            margin-bottom: 28px;
+            border: 1px solid #e8e8ed;
+            font-size: 14px;
+            color: #555;
+            line-height: 1.9;
+        }
+        .intro strong { color: #1a1a2e; }
+
+        /* 排班表格 */
+        .schedule-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 28px;
+            border: 1px solid #e8e8ed;
+            overflow-x: auto;
+        }
+        .schedule-section h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1a1a2e;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            text-align: center;
+            min-width: 700px;
+        }
+        th {
+            background: #1a1a2e;
+            color: #fff;
+            padding: 12px 8px;
+            font-weight: 500;
+            border: 1px solid #2d2d44;
+            white-space: nowrap;
+        }
+        td {
+            padding: 12px 8px;
+            border: 1px solid #e8e8ed;
+            color: #333;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        tr:nth-child(even) td { background: #fafafc; }
+        tr:hover td { background: #f0f4ff; }
+        .time-col {
+            background: #f8f8fa !important;
+            font-weight: 600;
+            color: #555;
+            white-space: nowrap;
+            cursor: default;
+        }
+        .cell-A { color: #e74c3c; }
+        .cell-B { color: #e67e22; }
+        .cell-C { color: #f39c12; }
+        .cell-D { color: #27ae60; }
+        .cell-E { color: #2980b9; }
+        .cell-F { color: #8e44ad; }
+        .cell-G { color: #16a085; }
+        td:hover.cell-A { background: #fde8e8 !important; }
+        td:hover.cell-B { background: #fef0e2 !important; }
+        td:hover.cell-C { background: #fef9e7 !important; }
+        td:hover.cell-D { background: #e8f8ef !important; }
+        td:hover.cell-E { background: #e8f0fe !important; }
+        td:hover.cell-F { background: #f3e8f9 !important; }
+        td:hover.cell-G { background: #e8f8f5 !important; }
+
+        /* 时间段详情卡片 */
+        .detail-section {
+            margin-bottom: 28px;
+        }
+        .detail-section h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1a1a2e;
+            padding-left: 4px;
+        }
+        .period-card {
+            background: #fff;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            border: 1px solid #e8e8ed;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+        .period-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        .period-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 18px 24px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
+        }
+        .period-header:hover { background: #fafafc; }
+        .period-badge {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .badge-A { background: #e74c3c; }
+        .badge-B { background: #e67e22; }
+        .badge-C { background: #f39c12; }
+        .badge-D { background: #27ae60; }
+        .badge-E { background: #2980b9; }
+        .badge-F { background: #8e44ad; }
+        .badge-G { background: #16a085; }
+        .period-title {
+            flex: 1;
+        }
+        .period-title h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 2px;
+        }
+        .period-title span {
+            font-size: 12px;
+            color: #888;
+        }
+        .period-arrow {
+            font-size: 18px;
+            color: #bbb;
+            transition: transform 0.25s;
+        }
+        .period-card.open .period-arrow {
+            transform: rotate(180deg);
+        }
+        .period-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease;
+        }
+        .period-card.open .period-body {
+            max-height: 800px;
+        }
+        .period-content {
+            padding: 0 24px 24px;
+            display: flex;
+            gap: 20px;
+        }
+        .col-suit, .col-taboo {
+            flex: 1;
+            min-width: 0;
+        }
+        .col-label {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid;
+            display: inline-block;
+        }
+        .col-suit .col-label {
+            color: #27ae60;
+            border-color: #27ae60;
+        }
+        .col-taboo .col-label {
+            color: #e74c3c;
+            border-color: #e74c3c;
+        }
+        .col-suit p, .col-taboo p {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.9;
+            margin: 0;
+        }
+        .col-taboo p { color: #888; }
+
+        /* 案例提示 */
+        .example-box {
+            background: #fffbe6;
+            border: 1px solid #ffe58f;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 28px;
+            font-size: 14px;
+            color: #614700;
+            line-height: 1.9;
+        }
+        .example-box strong { color: #ad6800; }
+        .example-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #ad6800;
+            font-size: 15px;
+        }
+
+        /* 底部注 */
+        .footer-note {
+            text-align: center;
+            font-size: 13px;
+            color: #999;
+            padding: 20px 0;
+            border-top: 1px solid #e8e8ed;
+            margin-top: 12px;
+        }
+
+        @media (max-width: 640px) {
+            .hero { padding: 32px 16px 24px; }
+            .hero h1 { font-size: 22px; }
+            .period-content { flex-direction: column; gap: 16px; }
+            .container { padding: 16px 12px 40px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <h1>择吉 · 周时间段划分表</h1>
+    <p>掌控时间段的吉凶属性，让事情向好的局面发展。正确的人，正确的时间，正确的事，促进事物的不同变化。</p>
+</div>
+
+<div class="container">
+
+    <div class="intro">
+        以上为一周的时间段划分表，这种划分标准主要用于<strong>择吉</strong>，人们可以通过对时间段的掌控，让事情向好的局面发展。知道了每一个时间段适合做什么、做什么更有利，就可以根据这个时间表进行相关行动。<strong>注意避开一些不可能使用到的夜间时间。</strong>
+    </div>
+
+    <!-- 排班表 -->
+    <div class="schedule-section">
+        <h2>一周时间段速查</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>时间段</th>
+                    <th>周天</th>
+                    <th>周一</th>
+                    <th>周二</th>
+                    <th>周三</th>
+                    <th>周四</th>
+                    <th>周五</th>
+                    <th>周六</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="time-col">00:00 – 3:25</td>
+                    <td class="cell-G" data-period="G">G</td>
+                    <td class="cell-C" data-period="C">C</td>
+                    <td class="cell-F" data-period="F">F</td>
+                    <td class="cell-B" data-period="B">B</td>
+                    <td class="cell-E" data-period="E">E</td>
+                    <td class="cell-A" data-period="A">A</td>
+                    <td class="cell-D" data-period="D">D</td>
+                </tr>
+                <tr>
+                    <td class="time-col">3:25 – 6:51</td>
+                    <td class="cell-A" data-period="A">A</td>
+                    <td class="cell-D" data-period="D">D</td>
+                    <td class="cell-G" data-period="G">G</td>
+                    <td class="cell-C" data-period="C">C</td>
+                    <td class="cell-F" data-period="F">F</td>
+                    <td class="cell-B" data-period="B">B</td>
+                    <td class="cell-E" data-period="E">E</td>
+                </tr>
+                <tr>
+                    <td class="time-col">6:51 – 10:17</td>
+                    <td class="cell-B" data-period="B">B</td>
+                    <td class="cell-E" data-period="E">E</td>
+                    <td class="cell-A" data-period="A">A</td>
+                    <td class="cell-D" data-period="D">D</td>
+                    <td class="cell-G" data-period="G">G</td>
+                    <td class="cell-C" data-period="C">C</td>
+                    <td class="cell-F" data-period="F">F</td>
+                </tr>
+                <tr>
+                    <td class="time-col">10:17 – 13:42</td>
+                    <td class="cell-C" data-period="C">C</td>
+                    <td class="cell-F" data-period="F">F</td>
+                    <td class="cell-B" data-period="B">B</td>
+                    <td class="cell-E" data-period="E">E</td>
+                    <td class="cell-A" data-period="A">A</td>
+                    <td class="cell-D" data-period="D">D</td>
+                    <td class="cell-G" data-period="G">G</td>
+                </tr>
+                <tr>
+                    <td class="time-col">13:42 – 17:08</td>
+                    <td class="cell-D" data-period="D">D</td>
+                    <td class="cell-G" data-period="G">G</td>
+                    <td class="cell-C" data-period="C">C</td>
+                    <td class="cell-F" data-period="F">F</td>
+                    <td class="cell-B" data-period="B">B</td>
+                    <td class="cell-E" data-period="E">E</td>
+                    <td class="cell-A" data-period="A">A</td>
+                </tr>
+                <tr>
+                    <td class="time-col">17:08 – 20:34</td>
+                    <td class="cell-E" data-period="E">E</td>
+                    <td class="cell-A" data-period="A">A</td>
+                    <td class="cell-D" data-period="D">D</td>
+                    <td class="cell-G" data-period="G">G</td>
+                    <td class="cell-C" data-period="C">C</td>
+                    <td class="cell-F" data-period="F">F</td>
+                    <td class="cell-B" data-period="B">B</td>
+                </tr>
+                <tr>
+                    <td class="time-col">20:34 – 00:00</td>
+                    <td class="cell-F" data-period="F">F</td>
+                    <td class="cell-B" data-period="B">B</td>
+                    <td class="cell-E" data-period="E">E</td>
+                    <td class="cell-A" data-period="A">A</td>
+                    <td class="cell-D" data-period="D">D</td>
+                    <td class="cell-G" data-period="G">G</td>
+                    <td class="cell-C" data-period="C">C</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 案例 -->
+    <div class="example-box">
+        <div class="example-title">用法示例</div>
+        假如某人找你签订一份合同或协议，对方许下种种承诺，你也有些心动。此时你发现时间是<strong>周一上午九点</strong>，根据表格属于 <strong>E 时间段</strong>——不适合签订协议，对方不会按承诺做事，必须警惕涉入。<br><br>
+        但如果你故意拖延到 F 时间段再签，也是不合适的，因为凡事都有自己一个<strong>先天的起始点</strong>。简而言之，假如有人在 F 时间段主动找你签订合同，则更可靠。
+    </div>
+
+    <!-- 时间段详解 -->
+    <div class="detail-section">
+        <h2>各时间段详解</h2>
+
+        <!-- A -->
+        <div class="period-card" id="card-A">
+            <div class="period-header" onclick="toggleCard('A')">
+                <div class="period-badge badge-A">A</div>
+                <div class="period-title">
+                    <h3>A 时间段</h3>
+                    <span>权威 · 地位 · 声望</span>
+                </div>
+                <div class="period-arrow">▼</div>
+            </div>
+            <div class="period-body">
+                <div class="period-content">
+                    <div class="col-suit">
+                        <div class="col-label">宜</div>
+                        <p>适合和职位高的人打交道；适合制定任何计划细节；向高位者求情（特别与职位晋升相关）；在政治地位或社会地位上会被要求留下；拖延法定程序；背书；给高职位的人推荐人才。适合与政府、高官打交道；适合签订遗嘱、契约类；适合写重要信件寻求帮助；为带来个人信用和企业信用的公开讲话；为自己的事业赢得尊重；提高个人声望或事物的荣誉。</p>
+                    </div>
+                    <div class="col-taboo">
+                        <div class="col-label">忌</div>
+                        <p>对付罪犯、面对坏事；克制冲动，行动必须谨慎；不利于短途旅行；不利于开始新项目、新业务、新计划；不利于借钱、婚姻和恋爱；不利于入宅、装修；不利于外科手术；不利于购买房产；不利于新的金融投资；不利于买牲畜；不利于签订合同。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- B -->
+        <div class="period-card" id="card-B">
+            <div class="period-header" onclick="toggleCard('B')">
+                <div class="period-badge badge-B">B</div>
+                <div class="period-title">
+                    <h3>B 时间段</h3>
+                    <span>艺术 · 新始 · 社交</span>
+                </div>
+                <div class="period-arrow">▼</div>
+            </div>
+            <div class="period-body">
+                <div class="period-content">
+                    <div class="col-suit">
+                        <div class="col-label">宜</div>
+                        <p>利于处理艺术、音乐、家居美化等事宜，或个人与纯物质和性感的事务；这是开始任何新事物的绝佳时期；利于处理与公共行政有关的公众事务、公用事业或招揽业务；利于雇佣代理商、公司重要职位人员或家庭雇佣人员；在此期间结识的朋友一般值得信赖；适合一个月内的短途旅行；是结婚和求爱的好时机；适合借款、投入材料、制定新的商务或娱乐计划；在商业上寻求帮助；有利于游戏类机会和投机性质的投资；也是和女人打交道的好时期。</p>
+                    </div>
+                    <div class="col-taboo">
+                        <div class="col-label">忌</div>
+                        <p>不利于雄心勃勃、野心太大；这是一个富有成果的时间段，很多事达到顶峰比预期更为热闹，容易带来冲动，需注意；不太适合雇佣仆人或低职位的人；不利于长途旅行。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- C -->
+        <div class="period-card" id="card-C">
+            <div class="period-header" onclick="toggleCard('C')">
+                <div class="period-badge badge-C">C</div>
+                <div class="period-title">
+                    <h3>C 时间段</h3>
+                    <span>知识 · 教育 · 文书</span>
+                </div>
+                <div class="period-arrow">▼</div>
+            </div>
+            <div class="period-body">
+                <div class="period-content">
+                    <div class="col-suit">
+                        <div class="col-label">宜</div>
+                        <p>非常利于知识、教育和艺术——科学研究、出版印刷、写论文、开始新广告宣传活动、处理法律论点、在法庭上应用智力和逻辑、在校指导、在院校推广；含有教育的活动；特别利于学习和记忆；对吸收知识、处理文件、书籍分拣非常有利；特别适合任何类型的心理活动——写作、思考、反省、说话、交流；也是享受音乐、艺术的好时间；适合买卖牲畜；适合制定短期合同；雇佣各种雇员；利于短途旅行；非常适合服药、治疗；适合放贷、兴建新建筑；利于学习各种神秘学、哲学、研究真理；适合签署各种文件、写各种重要文件。</p>
+                    </div>
+                    <div class="col-taboo">
+                        <div class="col-label">忌</div>
+                        <p>要小心给你建议的人，他们会夸大甚至欺骗；不适合处理私人事务和公共事务；要小心小人；会带来没完没了的讨论（得不到任何有益的结果）；这是一个非常多变的时期；不利于婚姻，会带来伤害。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- D -->
+        <div class="period-card" id="card-D">
+            <div class="period-header" onclick="toggleCard('D')">
+                <div class="period-badge badge-D">D</div>
+                <div class="period-title">
+                    <h3>D 时间段</h3>
+                    <span>商业 · 事业 · 雄心</span>
+                </div>
+                <div class="period-arrow">▼</div>
+            </div>
+            <div class="period-body">
+                <div class="period-content">
+                    <div class="col-suit">
+                        <div class="col-label">宜</div>
+                        <p>对各种商业、公众事务、任何职务类、教育类工作或种植、农业经营、结交新朋友、雇佣各种人都是非常好的时间段；是开始短途旅行和长途水路旅行的好时机；利于写作、报纸、婚恋以及海洋类事务；利于医疗、外科以及各种身心健康方面的事务；利于研究哲学、术数；处理航运、运输利益；对推销、旅行代理等都非常有利；这个时间段雄心壮志被高度激发且大多被证明卓有成效；利于和女性打交道。</p>
+                    </div>
+                    <div class="col-taboo">
+                        <div class="col-label">忌</div>
+                        <p>不利于开展任何新事务；不利于官司是非；不利于签订合同；不利于借钱；不利于签署任何与金钱有关的文件或票据；忌讳投机；忌讳进行任何请求类事务。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- E -->
+        <div class="period-card" id="card-E">
+            <div class="period-header" onclick="toggleCard('E')">
+                <div class="period-badge badge-E">E</div>
+                <div class="period-title">
+                    <h3>E 时间段</h3>
+                    <span>稳健 · 持久 · 决断</span>
+                </div>
+                <div class="period-arrow">▼</div>
+            </div>
+            <div class="period-body">
+                <div class="period-content">
+                    <div class="col-suit">
+                        <div class="col-label">宜</div>
+                        <p>适合激进的追求或需要深思的活动、长期的活动、稳定的活动——这类事体在此时间段开启最佳；适合与法官、裁判、公检法部队等相关事务、与总裁等相关事务，或权力范围的特权决定；对任何有争议事件的决定，给予所有活动持久性与忍耐力；利于文学作品、广告、法律行为；利于各种发明、机械生产类；利于搬家和买卖房地产；利于精神冥想修炼等。</p>
+                    </div>
+                    <div class="col-taboo">
+                        <div class="col-label">忌</div>
+                        <p>容易发现之前认为不幸的时期得到了证实；不利于签订合同；不利于集资、播种、经营、水路旅行、招聘、婚姻、医疗、借钱、装修；不利于与公共机构合作、与知名人士合作；不利于投机、证券、手术等。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- F -->
+        <div class="period-card" id="card-F">
+            <div class="period-header" onclick="toggleCard('F')">
+                <div class="period-badge badge-F">F</div>
+                <div class="period-title">
+                    <h3>F 时间段</h3>
+                    <span>大吉 · 丰盛 · 持久</span>
+                </div>
+                <div class="period-arrow">▼</div>
+            </div>
+            <div class="period-body">
+                <div class="period-content">
+                    <div class="col-suit">
+                        <div class="col-label">宜</div>
+                        <p>一天之中最吉利的时间段之一。适合开始任何新的事业、买卖牲畜、商业行为、签订合同、记账、集资、教育工作、长短途旅行、文字工作、律师交涉、开董事会、启动法院程序、谈恋爱、结婚、借贷、建筑、制定计划、商业上的晋升、买房房地产、社会事务、娱乐、投机都是有利的。</p>
+                    </div>
+                    <div class="col-taboo">
+                        <div class="col-label">忌</div>
+                        <p>能给人带来大量的身心能量，要防止透支；在商业事务上男性比女性更有利，但在社会事务上女性更有利；具有永久性或持久性，因此需要一些谨慎；不利于雇佣仆人和低岗位；不利于海洋事务。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- G -->
+        <div class="period-card" id="card-G">
+            <div class="period-header" onclick="toggleCard('G')">
+                <div class="period-badge badge-G">G</div>
+                <div class="period-title">
+                    <h3>G 时间段</h3>
+                    <span>体力 · 侵略 · 劳作</span>
+                </div>
+                <div class="period-arrow">▼</div>
+            </div>
+            <div class="period-body">
+                <div class="period-content">
+                    <div class="col-suit">
+                        <div class="col-label">宜</div>
+                        <p>适合需要花费精力去掌握的知识和侵略性质的事务；具有耐力和持久性；适合处理花费体力多过脑力的事务，需要真正的劳动力；适合物质和感官类事务；适合筹集资金、推销、军事、海洋、机械工作、发明、建筑、金属、劳作。</p>
+                    </div>
+                    <div class="col-taboo">
+                        <div class="col-label">忌</div>
+                        <p>不利于接受礼物或恩惠、公众事务、买卖动物、投机、打击敌人、长途旅行、法律行为、婚姻求偶、寻求帮助、手术；疾病容易发炎、发烧；不利于与女性打交道；防止是非、争斗；防止流血、灾害发生；听闻爆炸、事故等；防止冲动。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 底部总结 -->
+    <div class="example-box">
+        <div class="example-title">核心要义</div>
+        当一个人在上午十点找你洽谈业务时，你发现这是一个不吉利的时间段，于是你拒绝了他，但他随后在吉利的时间找到另外一个人洽谈却成功了。这里面包含了每一个时间点的选择——<strong>正确的人，正确的时间和正确的事，促进了事物的不同变化。</strong>所以这个系统，一定要注意事情的<strong>起始点、触发点</strong>。
+    </div>
+
+    <div class="footer-note">
+        择吉时间段划分表 · 注意事项宜忌仅供参考
+    </div>
+
+</div>
+
+<script>
+function toggleCard(id) {
+    const card = document.getElementById('card-' + id);
+    card.classList.toggle('open');
+}
+
+// 点击表格中的时间段字母，自动展开对应卡片并滚动到该位置
+document.querySelectorAll('td[data-period]').forEach(td => {
+    td.addEventListener('click', function() {
+        const period = this.getAttribute('data-period');
+        const card = document.getElementById('card-' + period);
+        if (!card.classList.contains('open')) {
+            card.classList.add('open');
+        }
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+});
+</script>
+
+</body>
+</html>
